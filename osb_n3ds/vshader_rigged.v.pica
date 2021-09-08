@@ -1,0 +1,81 @@
+; Uniforms
+.fvec projView[4], model[4]
+.fvec boneMatrices[54]
+
+; Constants
+.constf consts(0.0, 1.0, 2.0, 3.0)
+.alias  zeros consts.xxxx ; Vector full of zeros
+.alias  ones  consts.yyyy ; Vector full of ones
+
+; Outputs
+.out outpos position
+.out outtc0 texcoord0
+
+; Inputs (defined as aliases for convenience)
+.alias inpos v0
+.alias intex v1
+.alias weights v2
+.alias bones v3
+
+.proc main
+		
+	mov r0, bones.x
+	mul r0, consts.w, r0
+
+	mova r0
+	mul r1, boneMatrices[a0], weights.x
+	mul r2, boneMatrices[a0+1], weights.x
+	mul r3, boneMatrices[a0+2], weights.x
+	mova zeros.x
+
+	mov r0, bones.y
+	mul r0, consts.w, r0
+
+	mova r0
+	mul r0, boneMatrices[a0], weights.y
+	add r1, r0, r1
+	mul r0, boneMatrices[a0+1], weights.y
+	add r2, r0, r2
+	mul r0, boneMatrices[a0+2], weights.y
+	add r3, r0, r3
+	mova zeros.x
+
+	mov r0, bones.z
+	mul r0, consts.w, r0
+
+	mova r0
+	mul r0, boneMatrices[a0], weights.z
+	add r1, r0, r1
+	mul r0, boneMatrices[a0+1], weights.z
+	add r2, r0, r2
+	mul r0, boneMatrices[a0+2], weights.z
+	add r3, r0, r3
+	mova zeros.x
+
+	mov r0, inpos.xyz
+	mov r0.w, ones
+
+	dp4 r4.x, r1, r0
+	dp4 r4.y, r2, r0
+	dp4 r4.z, r3, r0
+
+	mov r0.xyz, r4.xyz
+
+	; r1 = model * inpos
+	dp4 r1.x, model[0], r0
+	dp4 r1.y, model[1], r0
+	dp4 r1.z, model[2], r0
+	dp4 r1.w, model[3], r0
+
+	; outpos = projView * r1
+	dp4 outpos.x, projView[0], r1
+	dp4 outpos.y, projView[1], r1
+	dp4 outpos.z, projView[2], r1
+	dp4 outpos.w, projView[3], r1
+
+	; outtex = intex
+	mov outtc0, intex
+
+	; We're finished
+	end
+.end
